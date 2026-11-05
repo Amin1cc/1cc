@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ساعت هوشمند</title>
+<style>
+  * { box-sizing: border-box; }
+
+  :root{
+    --size: clamp(240px, 72vw, 340px);
+    --bg-1:#070b16;
+    --bg-2:#0f172e;
+    --face-1:#16203a;
+    --face-2:#0a1120;
+    --text:#e8eeff;
+    --muted:#7b88a8;
+    --hand:#e8eeff;
+    --danger:#ff4d6d;
+    --ring-track: rgba(255,255,255,.07);
+    --btn-bg: rgba(255,255,255,.06);
+    --btn-bd: rgba(255,255,255,.13);
+  }
+
+  [data-theme="light"]{
+    --bg-1:#eef3ff;
+    --bg-2:#dbe6ff;
+    --face-1:#ffffff;
+    --face-2:#e9f0ff;
+    --text:#111a2e;
+    --muted:#8a96b3;
+    --hand:#1b2a4a;
+    --danger:#e5486b;
+    --ring-track: rgba(0,0,0,.09);
+    --btn-bg: rgba(0,0,0,.045);
+    --btn-bd: rgba(0,0,0,.1);
+  }
+
+  html, body { height: 100%; }
+
+  body{
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Segoe UI", Tahoma, system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 18% 8%,  rgba(90,169,255,.20), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(34,211,238,.16), transparent 45%),
+      linear-gradient(160deg, var(--bg-1), var(--bg-2));
+    background-attachment: fixed;
+    transition: background .45s ease, color .45s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .panel{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+  }
+
+  /* ---------- ساعت ---------- */
+  .clock{
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+  }
+
+  .clock::before{
+    content: "";
+    position: absolute;
+    inset: -12%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(90,169,255,.40), transparent 65%);
+    filter: blur(30px);
+    z-index: 0;
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  @keyframes breathe{
+    0%, 100% { opacity: .65; transform: scale(.97); }
+    50%      { opacity: 1;   transform: scale(1.03); }
+  }
+
+  .ring{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    z-index: 1;
+  }
+
+  .ring-bg{
+    fill: none;
+    stroke: var(--ring-track);
+    stroke-width: 2.5;
+  }
+
+  .ring-fg{
+    fill: none;
+    stroke: url(#ringGrad);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 295.31;
+    stroke-dashoffset: 295.31;
+    filter: drop-shadow(0 0 4px rgba(90,169,255,.7));
+  }
+
+  .face{
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 24%, var(--face-1), var(--face-2) 72%);
+    border: 1px solid rgba(255,255,255,.07);
+    box-shadow:
+      inset 0 2px 14px rgba(255,255,255,.07),
+      inset 0 -10px 26px rgba(0,0,0,.45),
+      0 20px 45px rgba(0,0,0,.45);
+    z-index: 2;
+    transition: background .45s ease, box-shadow .45s ease;
+  }
+
+  /* ---------- خط‌های ساعت ---------- */
+  .tick{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 2px;
+    height: 8px;
+    margin: -4px 0 0 -1px;
+    background: var(--muted);
+    opacity: .55;
+    border-radius: 2px;
+    transform-origin: 50% 50%;
+  }
+
+  .tick.major{
+    width: 3px;
+    height: 14px;
+    margin: -7px 0 0 -1.5px;
+    background: var(--text);
+    opacity: .9;
+  }
+
+  /* ---------- عقربه‌ها ---------- */
+  .hand{
+    position: absolute;
+    left: 50%;
+    bottom: 50%;
+    transform-origin: 50% 100%;
+    border-radius: 999px;
+    background: var(--hand);
+    will-change: transform;
+    transition: background .45s ease;
+  }
+
+  .hand.hour  { width: 6px; height: 26%; z-index: 3; }
+  .hand.minute{ width: 4px; height: 36%; z-index: 3; }
+  .hand.second{
+    width: 2px;
+    height: 44%;
+    background: var(--danger);
+    z-index: 4;
+    box-shadow: 0 0 8px var(--danger);
+  }
+
+  .center-dot{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 0 3px var(--face-2), 0 0 14px var(--danger);
+    z-index: 5;
+  }
+
+  /* ---------- نمایش دیجیتال ---------- */
+  .digital{ text-align: center; }
+
+  .time{
+    direction: ltr;
+    font-family: ui-monospace, "SF Mono", Consolas, "Courier New", monospace;
+    font-size: clamp(24px, 7vw, 34px);
+    font-weight: 600;
+    letter-spacing: .06em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 22px rgba(90,169,255,.35);
+  }
+
+  .date{
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: .02em;
+  }
+
+  /* ---------- دکمه‌ها ---------- */
+  .controls{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button{
+    font: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--btn-bg);
+    border: 1px solid var(--btn-bd);
+    padding: 9px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: transform .18s ease, background .18s ease, border-color .18s ease;
+  }
+
+  button:hover { background: rgba(127,127,127,.16); transform: translateY(-1px); }
+  button:active{ transform: translateY(0) scale(.96); }
+</style>
+</head>
+<body>
+
+  <div class="panel">
+
+    <div class="clock">
+      <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stop-color="#5aa9ff"/>
+            <stop offset="100%" stop-color="#22d3ee"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="50" cy="50" r="47"/>
+        <circle class="ring-fg" id="secRing" cx="50" cy="50" r="47"/>
+      </svg>
+
+      <div class="face" id="face">
+        <div class="hand hour"   id="hourHand"></div>
+        <div class="hand minute" id="minHand"></div>
+        <div class="hand second" id="secHand"></div>
+        <div class="center-dot"></div>
+      </div>
+    </div>
+
+    <div class="digital">
+      <div class="time" id="digitalTime">00:00:00</div>
+      <div class="date" id="digitalDate">—</div>
+    </div>
+
+    <div class="controls">
+      <button id="themeBtn" type="button">🌙 حالت تاریک</button>
+      <button id="formatBtn" type="button">⏱ ۲۴ ساعته</button>
+    </div>
+
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  const face      = document.getElementById("face");
+  const hourHand  = document.getElementById("hourHand");
+  const minHand   = document.getElementById("minHand");
+  const secHand   = document.getElementById("secHand");
+  const secRing   = document.getElementById("secRing");
+  const timeEl    = document.getElementById("digitalTime");
+  const dateEl    = document.getElementById("digitalDate");
+  const themeBtn  = document.getElementById("themeBtn");
+  const formatBtn = document.getElementById("formatBtn");
+
+  /* ---------- ساخت ۶۰ خط ساعت ---------- */
+  const fragment = document.createDocumentFragment();
+  for (let i = 0; i < 60; i++) {
+    const tick = document.createElement("i");
+    tick.className = "tick" + (i % 5 === 0 ? " major" : "");
+    tick.style.transform =
+      `rotate(${i * 6}deg) translateY(calc(26px - var(--size) / 2))`;
+    fragment.appendChild(tick);
+  }
+  face.insertBefore(fragment, face.firstChild);
+
+  /* ---------- تنظیمات ---------- */
+  const CIRC = 2 * Math.PI * 47;   // محیط حلقهٔ ثانیه‌شمار
+  let use24 = true;
+  const pad = (n) => String(n).padStart(2, "0");
+
+  const dateFmt = new Intl.DateTimeFormat("fa-IR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+
+  let lastDateText = "";
+
+  /* ---------- حلقهٔ اصلی رندر ---------- */
+  function render() {
+    const now = new Date();
+    const ms  = now.getMilliseconds();
+
+    const sec = now.getSeconds() + ms / 1000;
+    const min = now.getMinutes() + sec / 60;
+    const hr  = (now.getHours() % 12) + min / 60;
+
+    // عقربه‌ها
+    secHand.style.transform  = `translateX(-50%) rotate(${sec * 6}deg)`;
+    minHand.style.transform  = `translateX(-50%) rotate(${min * 6}deg)`;
+    hourHand.style.transform = `translateX(-50%) rotate(${hr * 30}deg)`;
+
+    // حلقهٔ پیشرفت ثانیه
+    secRing.style.strokeDashoffset = CIRC * (1 - sec / 60);
+
+    // نمایش دیجیتال
+    let h = now.getHours();
+    let suffix = "";
+    if (!use24) {
+      suffix = h >= 12 ? " PM" : " AM";
+      h = h % 12 || 12;
+    }
+    timeEl.textContent =
+      `${pad(h)}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${suffix}`;
+
+    // تاریخ شمسی (فقط وقتی تغییر کند)
+    const dateText = dateFmt.format(now);
+    if (dateText !== lastDateText) {
+      lastDateText = dateText;
+      dateEl.textContent = dateText;
+    }
+
+    requestAnimationFrame(render);
+  }
+
+  /* ---------- تغییر تم ---------- */
+  themeBtn.addEventListener("click", () => {
+    const root = document.documentElement;
+    const isLight = root.getAttribute("data-theme") === "light";
+    root.setAttribute("data-theme", isLight ? "dark" : "light");
+    themeBtn.textContent = isLight ? "🌙 حالت تاریک" : "☀️ حالت روشن";
+  });
+
+  /* ---------- تغییر فرمت ۱۲/۲۴ ---------- */
+  formatBtn.addEventListener("click", () => {
+    use24 = !use24;
+    formatBtn.textContent = use24 ? "⏱ ۲۴ ساعته" : "🕐 ۱۲ ساعته";
+  });
+
+  /* ---------- شروع ---------- */
+  render();
+})();
+</script>
+</body>
+</html>
